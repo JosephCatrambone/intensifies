@@ -1,0 +1,14 @@
+[package]
+name = "intensifies"
+version = "0.1.0"
+authors = ["Joseph Catrambone <jo.jcat@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+base64 = "0.11.0"
+gif = "0.10.3"
+image = "0.22.3"
+rand = "0.7.2"
+rusttype = "0.8.1"
