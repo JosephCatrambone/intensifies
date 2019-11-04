@@ -25,14 +25,14 @@ fn generate(b64_image: &String, text: &String, font_color: [u8;4], num_frames: u
 	};
 
 	// Create a text overlay to put on top of the original image.
-	let intensified = generate_image(image, text, font_color, num_frames, shake_intensity);
+	let intensified = generate_image(image, text, font_color, 14.0f32, num_frames, shake_intensity);
 	
 	// Encode a b64 image.
 	let encoded_data = base64::encode(&intensified);
 	Ok(encoded_data)
 }
 
-fn generate_image(image: DynamicImage, text:&String, font_color: [u8;4], num_frames: u8, shake_intensity: u8) -> Vec<u8> {
+fn generate_image(image: DynamicImage, text:&String, font_color: [u8;4], font_size: f32, num_frames: u8, shake_intensity: u8) -> Vec<u8> {
 	let shake_intensity = shake_intensity as i8;
 	// Generate 'shaking' image.
 	// We could use a Vec and read it as bytes because of the bufread support, but this is easer.
@@ -52,7 +52,7 @@ fn generate_image(image: DynamicImage, text:&String, font_color: [u8;4], num_fra
 		});
 		
 		// Add the text.
-		overlay_text(&mut padded_image, text, font_color, 18.0f32);
+		overlay_text(&mut padded_image, text, font_color, font_size);
 		
 		// Create the frames with random crops.
 		let mut rng = rand::thread_rng();
@@ -89,11 +89,12 @@ fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_co
 		});
 	
 	// Desired font pixel height
-	let height: f32 = font_size; // to get 80 chars across (fits most terminals); adjust as desired
+	let height: f32 = font_size;
+	let width: f32 = font_size;
 	
 	// 2x scale in x direction to counter the aspect ratio of monospace characters.
 	let scale = Scale {
-		x: height * 2.0,
+		x: width,
 		y: height,
 	};
 	
@@ -103,8 +104,8 @@ fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_co
 	// distance between the baseline and the highest edge of any glyph in
 	// the font. That's enough to guarantee that there's no clipping.
 	let v_metrics = font.v_metrics(scale);
-	let font_block_width = font.units_per_em() * text.len() as u16;
-	let offset = point((image.width() - font_block_width as u32) as f32/2f32, image.height() as f32 * 2f32 / 3f32 + v_metrics.ascent);
+	let font_block_width = width * text.len() as f32;
+	let offset = point((image.width() as i32 - font_block_width as i32) as f32/2f32, image.height() as f32 * 2f32 / 3f32 + v_metrics.ascent);
 	let glyphs: Vec<PositionedGlyph<'_>> = font.layout(text, scale, offset).collect();
 	
 	// Find the most visually pleasing width to display
