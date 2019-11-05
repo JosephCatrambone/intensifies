@@ -108,7 +108,8 @@ fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_co
 	
 	// Find the most visually pleasing width to display
 	//let pixel_height = height.ceil() as usize;
-	let total_text_width = glyphs.iter().rev().map(|g| g.position().x as f32 + g.unpositioned().h_metrics().advance_width).next().unwrap_or(0.0).ceil() as usize;
+	//let total_text_width = glyphs.iter().rev().map(|g| g.position().x as f32 + g.unpositioned().h_metrics().advance_width).next().unwrap_or(0.0).ceil() as usize;
+	let total_text_width : i32 = glyphs.iter().map(|g| { if let Some(bb) = g.pixel_bounding_box() { (bb.max.x - bb.min.x) as i32 } else { 0i32 } }).sum();
 	let x_offset = (image.width() as f32 - total_text_width as f32)/2f32;
 	let y_offset = image.height() as f32 * 2f32 / 3f32;
 	

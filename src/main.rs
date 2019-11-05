@@ -6,12 +6,12 @@ use std::env;
 use std::fs::File;
 use std::io::{Read, Write};
 
-fn main() {
+fn run_as_cli() {
 	let args: Vec<String> = env::args().collect();
 	let input_filename = &args[1];
 	let output_filename = &args[2];
 	let text = &args[3];
-
+	
 	// TEST!  This is wrapping as B64 instead of passing bytes directly because we are testing!
 	let mut input = File::open(input_filename).unwrap();
 	let mut data = Vec::<u8>::new();
@@ -28,4 +28,8 @@ fn main() {
 			println!("{}", err);
 		}
 	}
+}
+
+fn main() {
+	run_as_cli();
 }
