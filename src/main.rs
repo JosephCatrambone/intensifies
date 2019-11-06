@@ -14,5 +14,5 @@ fn main() {
 	let text = &args[3];
 	
 	//run_as_cli(input_filename, output_filename, text);
-	//start_web_service();
+	start_web_service();
 }
