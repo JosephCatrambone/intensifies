@@ -10,7 +10,7 @@ pub fn run_as_cli(input_filename: &String, output_filename: &String, text: &Stri
 	let mut input = File::open(input_filename).unwrap();
 	let mut data = Vec::<u8>::new();
 	input.read_to_end(&mut data);
-	let intense = generate(&base64::encode(&data), text, [255, 0, 255, 255], 2, 3);
+	let intense = generate(&base64::encode(&data), text, 2, 3);
 	match intense {
 		Ok(res) => {
 			let decoded = base64::decode(&res).unwrap();

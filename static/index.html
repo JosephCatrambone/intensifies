@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Intensifies</title>
+</head>
+<body>
+
+	<img src="" id="output-preview" alt="Output Preview">
+	<img src="" id="output-image" alt="Output Intensifies">
+	<br>
+	<input type="text" id="input-text" placeholder="[Something Intensifies]"><br>
+	<input type="file" id="input-image" accept="image/png, image/jpg, image/gif"><br>
+	<input type="button" id="submit" value="Submit">
+
+	<script type="application/javascript">
+		// Rather than put onchange="intensify()" on input-image, just attach here.
+		function previewFile(evt) {
+			//var file = document.querySelector('input[type=file]').files[0];
+			const txt = document.querySelector("#input-text").value;
+			const preview = document.querySelector("#output-preview");
+			const result = document.querySelector("#output-image");
+			const file = document.querySelector("#input-image").files[0];
+			const reader  = new FileReader();
+			const url = Window.location;
+			reader.addEventListener("load", function () {
+				const descriptorEnd = reader.result.indexOf(",");
+				if(descriptorEnd === -1) {
+					// Bad file content
+					console.log("Bad b64 content")
+					return;
+				}
+				preview.src = reader.result;
+				const descriptor = reader.result.substring(0, descriptorEnd+1);
+				const b64data = reader.result.substring(descriptorEnd+1);
+				fetch(url, {
+					method: 'POST', // *GET, POST, PUT, DELETE, etc.
+					mode: 'cors', // no-cors, *cors, same-origin
+					cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+					credentials: 'same-origin', // include, *same-origin, omit
+					headers: {
+						'Content-Type': 'application/json' //'application/x-www-form-urlencoded',
+					},
+					body: JSON.stringify({
+						"image": b64data,
+						"text":txt,
+						"shake_frames": 2,
+						"shake_intensity": 5
+					})
+				}).then(val => {
+					val.blob().then(blob => {blob.text().then(text => {result.src = "data:image/gif;base64," + text})});
+				}, fail => {});
+			}, false);
+
+			if (file) {
+				reader.readAsDataURL(file);
+			}
+		}
+
+		let btn = document.querySelector("#submit");
+		btn.addEventListener("click", previewFile);
+	</script>
+
+</body>
+</html>

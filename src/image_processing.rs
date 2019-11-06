@@ -10,7 +10,7 @@ use std::cmp::max;
 
 // Open a base64-encoded image, convert to gif, add [noun intensifies], frames, and export as base64-gif.
 
-pub fn generate(b64_image: &String, text: &String, font_color: [u8;4], num_frames: u8, shake_intensity: u8) -> Result<String, String> {
+pub fn generate(b64_image: &String, text: &String, num_frames: u8, shake_intensity: u8) -> Result<String, String> {
 	// Decode base64 (standard) into an image vector.
 	let image_data = match(base64::decode(b64_image)) {
 		Ok(data) => data,
@@ -23,14 +23,14 @@ pub fn generate(b64_image: &String, text: &String, font_color: [u8;4], num_frame
 	};
 
 	// Create a text overlay to put on top of the original image.
-	let intensified = generate_image(image, text, font_color, 12.0f32, num_frames, shake_intensity);
+	let intensified = generate_image(image, text, 12.0f32, num_frames, shake_intensity);
 	
 	// Encode a b64 image.
 	let encoded_data = base64::encode(&intensified);
 	Ok(encoded_data)
 }
 
-pub fn generate_image(image: DynamicImage, text:&String, font_color: [u8;4], font_size: f32, num_frames: u8, shake_intensity: u8) -> Vec<u8> {
+pub fn generate_image(image: DynamicImage, text:&String, font_size: f32, num_frames: u8, shake_intensity: u8) -> Vec<u8> {
 	let shake_intensity = shake_intensity as i8;
 	// Generate 'shaking' image.
 	// We could use a Vec and read it as bytes because of the bufread support, but this is easer.
@@ -50,7 +50,7 @@ pub fn generate_image(image: DynamicImage, text:&String, font_color: [u8;4], fon
 		});
 		
 		// Add the text.
-		overlay_text(&mut padded_image, text, font_color, font_size);
+		overlay_text(&mut padded_image, text, font_size);
 		
 		// Create the frames with random crops.
 		let mut rng = rand::thread_rng();
@@ -75,7 +75,7 @@ pub fn generate_image(image: DynamicImage, text:&String, font_color: [u8;4], fon
 	result_data
 }
 
-fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_color:[u8;4], font_size:f32) {
+fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_size:f32) {
 	// Load font.
 	// Generate glyph based on image side.
 	let font_data = include_bytes!("../fonts/default.ttf");
@@ -113,7 +113,16 @@ fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_co
 	let x_offset = (image.width() as f32 - total_text_width as f32)/2f32;
 	let y_offset = image.height() as f32 * 2f32 / 3f32;
 	
-	// Rasterise directly into ASCII art.
+	// By shifting our offset in the four cardinal directions, we can draw a black backdrop.
+	draw_glyphs(image, &glyphs, (x_offset as i32 - 1, y_offset as i32), [0u8, 0u8, 0u8, 255u8]);
+	draw_glyphs(image, &glyphs, (x_offset as i32 + 1, y_offset as i32), [0u8, 0u8, 0u8, 255u8]);
+	draw_glyphs(image, &glyphs, (x_offset as i32, y_offset as i32 - 1), [0u8, 0u8, 0u8, 255u8]);
+	draw_glyphs(image, &glyphs, (x_offset as i32, y_offset as i32 + 2), [0u8, 0u8, 0u8, 255u8]);
+	draw_glyphs(image, &glyphs, (x_offset as i32, y_offset as i32), [255u8, 255u8, 255u8, 255u8]);
+	
+}
+
+fn draw_glyphs(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, glyphs:&Vec<PositionedGlyph>, offset:(i32, i32), font_color: [u8; 4]) {
 	for g in glyphs {
 		if let Some(bb) = g.pixel_bounding_box() {
 			g.draw(|x, y, v| {
@@ -121,8 +130,8 @@ fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_co
 				// so something's wrong if you get $ in the output.
 				//let i = (v * mapping_scale + 0.5) as usize;
 				//let c = mapping.get(i).cloned().unwrap_or(b'$');
-				let x = x as i32 + bb.min.x + x_offset as i32;
-				let y = y as i32 + bb.min.y + y_offset as i32;
+				let x = x as i32 + bb.min.x + offset.0;
+				let y = y as i32 + bb.min.y + offset.1;
 				// There's still a possibility that the glyph clips the boundaries of the bitmap
 				if x >= 0 && x < image.width() as i32 && y >= 0 && y < image.height() as i32 {
 					let x = x as usize;
@@ -130,12 +139,9 @@ fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_co
 					let pixel = image.get_pixel_mut(x as u32, y as u32);
 					let bg_color = pixel.0;
 					if v > 0.0 {
-						// Use blend mode src * (1 - alpha)  + dst * (alpha)
-						//let red:u8 = ((((bg_color[0] * bg_color[0]) as f32 * (1.0f32 - v as f32)) + ((font_color[0] * font_color[0]) as f32 * v)).sqrt()) as u8;
 						let red:u8 = ((bg_color[0] as f32 * (1.0f32 - v as f32)) + (font_color[0] as f32 * v as f32 * 255f32)).sqrt() as u8;
 						let green:u8 = ((bg_color[1] as f32 * (1.0f32 - v as f32)) + (font_color[1] as f32 * v as f32 * 255f32)).sqrt() as u8;
 						let blue:u8 = ((bg_color[2] as f32 * (1.0f32 - v as f32)) + (font_color[2] as f32 * v as f32 * 255f32)).sqrt() as u8;
-						//let green:u8 = (bg_color[1] as f32 * (1.0f32 - (v as f32)/255f32) + font_color[1] as f32 * (v/255f32) as f32).sqrt() as u8;
 						*pixel = image::Rgba([red, green, blue, 255u8]);
 					}
 				}
