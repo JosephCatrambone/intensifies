@@ -4,40 +4,62 @@
 	<meta charset="UTF-8">
 	<title>Intensifies</title>
 	<style>
+		html {
+			display: table;
+			height: 100%;
+			margin: auto;
+		}
+
 		body {
+			height: 100%;
+			display: table-cell;
+			vertical-align: middle;
+			horiz-align: center;
+		}
+
+		content {
 			display: grid;
 			grid-template-columns: repeat(2, 1fr); /* 1frame width for each of the six columns.  == 1fr 1fr 1fr ...*/
 		}
 
-		.outputs {
+		.inputs {
 			grid-row: 1;
+			grid-column: 1 / span 2;
+			padding: 10px;
+		}
+
+		#input-text {
+			width: 100%;
+		}
+
+		.outputs {
+			grid-row: 2;
 		}
 
 		#output-preview {
 			grid-column-start: 1;
+			padding: 10px;
 		}
 
 		#output-image {
 			grid-column-start: 2;
-		}
-
-		.inputs {
-			grid-row: 2;
-			grid-column: 1 / span 2;
+			padding: 10px;
 		}
 	</style>
 </head>
 <body>
 
-	<div class="outputs">
-		<img src="" id="output-preview" alt="Output Preview">
-		<img src="" id="output-image" alt="Output Intensifies">
-	</div>
+	<div class="content">
+		<div class="inputs">
+			<input type="text" id="input-text" placeholder="[Something Intensifies]"><br>
+			<input type="file" id="input-image" accept="image/png, image/jpg, image/gif"><br>
+			<input type="button" id="submit" value="Submit">
+		</div>
 
-	<div class="inputs">
-		<input type="text" id="input-text" placeholder="[Something Intensifies]"><br>
-		<input type="file" id="input-image" accept="image/png, image/jpg, image/gif"><br>
-		<input type="button" id="submit" value="Submit">
+		<div class="outputs">
+			<img src="" id="output-preview" alt="Output Preview">
+			<img src="" id="output-image" alt="Output Intensifies">
+		</div>
 	</div>
 
 	<script type="application/javascript">
@@ -54,7 +76,7 @@
 				const descriptorEnd = reader.result.indexOf(",");
 				if(descriptorEnd === -1) {
 					// Bad file content
-					console.log("Bad b64 content")
+					console.log("Bad b64 content");
 					return;
 				}
 				preview.src = reader.result;
