@@ -19,12 +19,12 @@
 
 		content {
 			display: grid;
-			grid-template-columns: repeat(2, 1fr); /* 1frame width for each of the six columns.  == 1fr 1fr 1fr ...*/
+			grid-template-columns: repeat(1, 1fr); /* 1frame width for each of the six columns.  == 1fr 1fr 1fr ...*/
 		}
 
 		.inputs {
 			grid-row: 1;
-			grid-column: 1 / span 2;
+			grid-column: 1 / span 1;
 			padding: 10px;
 		}
 
@@ -34,11 +34,7 @@
 
 		.outputs {
 			grid-row: 2;
-		}
-
-		#output-image {
-			grid-column-start: 1;
-			grid-column-end: 2;
+			grid-column: 1;
 			padding: 10px;
 		}
 	</style>
@@ -49,7 +45,7 @@
 		<div class="inputs">
 			<input type="text" id="input-text" placeholder="[Something Intensifies]"><br>
 			<input type="file" id="input-image" accept="image/png, image/jpg, image/gif"><br>
-			<input type="button" id="submit" value="Submit">
+			<input type="button" id="submit" value="Submit" disabled>
 		</div>
 
 		<div class="outputs">
@@ -74,6 +70,7 @@
 			}, false);
 			if (file) {
 				reader.readAsDataURL(file);
+				btn.disabled = false;
 			}
 		}
 
