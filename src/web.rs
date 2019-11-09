@@ -5,6 +5,7 @@ use rouille::input::{json, multipart};
 use rouille::Request;
 use rouille::Response;
 use serde::{Serialize, Deserialize};
+use std::string::ToString;
 
 use crate::image_processing::generate;
 
@@ -39,7 +40,8 @@ fn route_handler(request: &Request) -> Response {
 	
 }
 
-pub fn start_web_service() {
+pub fn start_web_service(port:&String) {
 	//rouille::start_server("0.0.0.0:80", move |request| { Response::text("hello world") });
-	rouille::start_server("0.0.0.0:80", route_handler);
+	//port.to_string()
+	rouille::start_server("0.0.0.0:".to_owned() + port, route_handler);
 }

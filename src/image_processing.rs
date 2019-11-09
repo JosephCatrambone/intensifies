@@ -6,7 +6,7 @@ use rusttype::{point, FontCollection, PositionedGlyph, Scale};
 use std::borrow::{Cow, Borrow};
 use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 use rand::Rng;
-use std::cmp::max;
+use std::cmp::{max, min};
 
 // Open a base64-encoded image, convert to gif, add [noun intensifies], frames, and export as base64-gif.
 
@@ -23,14 +23,14 @@ pub fn generate(b64_image: &String, text: &String, num_frames: u8, shake_intensi
 	};
 
 	// Create a text overlay to put on top of the original image.
-	let intensified = generate_image(image, text, 12.0f32, num_frames, shake_intensity);
+	let intensified = generate_image(image, text, 48.0f32, num_frames, shake_intensity);
 	
 	// Encode a b64 image.
 	let encoded_data = base64::encode(&intensified);
 	Ok(encoded_data)
 }
 
-pub fn generate_image(image: DynamicImage, text:&String, font_size: f32, num_frames: u8, shake_intensity: u8) -> Vec<u8> {
+pub fn generate_image(image: DynamicImage, text:&String, max_font_size: f32, num_frames: u8, shake_intensity: u8) -> Vec<u8> {
 	let shake_intensity = shake_intensity as i8;
 	// Generate 'shaking' image.
 	// We could use a Vec and read it as bytes because of the bufread support, but this is easer.
@@ -50,7 +50,7 @@ pub fn generate_image(image: DynamicImage, text:&String, font_size: f32, num_fra
 		});
 		
 		// Add the text.
-		overlay_text(&mut padded_image, text, font_size);
+		overlay_text(&mut padded_image, text, max_font_size);
 		
 		// Create the frames with random crops.
 		let mut rng = rand::thread_rng();
@@ -75,7 +75,7 @@ pub fn generate_image(image: DynamicImage, text:&String, font_size: f32, num_fra
 	result_data
 }
 
-fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_size:f32) {
+fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, max_font_size:f32) {
 	// Load font.
 	// Generate glyph based on image side.
 	let font_data = include_bytes!("../fonts/default.ttf");
@@ -86,7 +86,8 @@ fn overlay_text(image:&mut ImageBuffer<Rgba<u8>, Vec<u8>>, text:&String, font_si
 			panic!("error turning FontCollection into a Font: {}", e);
 		});
 	
-	// Desired font pixel height
+	// 13 pixels is 10 pt.  1.3px -> 1pt.  16 px is 12 pt.  4:3?
+	let font_size = f32::min(max_font_size, image.width() as f32 / 1.5f32);
 	let height: f32 = font_size;
 	let width: f32 = font_size;
 	
